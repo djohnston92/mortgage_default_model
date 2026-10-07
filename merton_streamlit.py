@@ -22,23 +22,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 ############################
 neon = st.secrets["neon"]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @st.cache_resource
 def get_engine():
-    return create_engine(neon)
+    # Pin the psycopg2 driver; SQLAlchemy 2.1+ defaults postgresql:// to psycopg (v3)
+    return create_engine(neon.replace("postgresql://", "postgresql+psycopg2://", 1))
 
 @st.cache_data
 def load_data():
@@ -49,26 +36,7 @@ def load_data():
     return df, df_state, df_national
 
 df, df_state, df_national = load_data()
-
-
-
 year_list = [2018,2019,2020,2021,2022,2023,2024,2025]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ############################
 st.title("County-Level Mortgage Default Risk")
 ############################
