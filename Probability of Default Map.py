@@ -39,6 +39,7 @@ df, df_state, df_national = load_data()
 year_list = [2018,2019,2020,2021,2022,2023,2024,2025]
 ############################
 st.title("County-Level Mortgage Default Risk")
+st.sidebar.markdown("[How the model works ↗](https://danieljohnston638537.substack.com/p/i-built-what-the-rating-agencies)")
 ############################
 @st.dialog("Data Dictionary")
 def show_data_dictionary():
@@ -63,6 +64,7 @@ def show_data_dictionary():
     | **Merton Model / Risk** | |
     | `avg_joint_pd` | Average joint probability of default across loans in the area, based on the Merton model (property value falling below loan balance, combined with borrower income-shock risk) |
     | `avg_sigma_a` | Average asset (home price) volatility, σ_V, derived from the FHFA HPI. Higher values mean prices swing more year to year (e.g. Las Vegas ~0.059 vs. national average ~0.037) |
+    | `avg_mu_a` | Average asset (home price) drift, μ_V, the trailing four-quarter change in the FHFA HPI, used as the expected annual price trend. Positive means prices have been rising |
     | `pct_drop_to_default` | The percentage decline in property value that would push the loan into default territory (asset value falls below loan balance) |
     """)
 
@@ -215,6 +217,20 @@ filtered = filtered.rename(columns={"latitude": "lat", "longitude": "lon"})
 filtered["avg_joint_pd_display"] = (filtered["avg_joint_pd"] * 100).round(2).astype(str) + "%"
 filtered["pct_drop_to_default"] = (filtered["pct_drop_to_default"] ).round(2).astype(str) + "%"
 filtered["loans_display"] = filtered["loans"].apply(lambda x: f"{x:,}")  # adds comma separators
+# drift and volatility as % so they read the same as the Scenario Heatmap sliders
+def pct_display(col):
+    # "n/a" instead of a crash if the column isn't in the data yet (old cache or older view)
+    if col not in filtered:
+        return "n/a"
+    return (filtered[col].astype(float) * 100).round(2).astype(str) + "%"
+
+
+filtered["avg_mu_a_display"] = pct_display("avg_mu_a")
+
+
+
+
+filtered["avg_sigma_a_display"] = pct_display("avg_sigma_a")
 # # --- Render with pydeck ---
 cb = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation="horizontal")
 cb.set_label("Avg Joint PD")
@@ -225,7 +241,8 @@ tooltip = {
         State: {state_name}<br/>
         Loans: {loans_display}<br/>
         Average Probability of Default: {avg_joint_pd_display}<br/>
-        Sigma A: {avg_sigma_a}<br/>
+        Price Drift (μ): {avg_mu_a_display}<br/>
+        Price Volatility (σ): {avg_sigma_a_display}<br/>
         Percentage Drop-To-Default: {pct_drop_to_default}<br/>
         Average Debt-To-Income: {avg_dti}<br/>
         Average Loan To Value: {avg_ltv}
