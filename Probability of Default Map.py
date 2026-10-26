@@ -90,6 +90,7 @@ def show_versions():
     | Version Number | Changes |
     |---|---|
     | `1.0` | Release Version |
+    | `1.1` | Inclusion of County Rationales and Heatmap |
     """)
 st.subheader("Filters")
 col1, col2, col3, col4 = st.columns(4)
